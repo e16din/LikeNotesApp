@@ -21,26 +21,6 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-inline fun CoroutineScope.launchWithHandler(
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
-    crossinline launch: suspend () -> Unit
-): Job {
-    return launch(defaultContext + dispatcher) {
-        launch.invoke()
-    }
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-//    throwable.log()
-//    if (throwable is UnauthorizedException) {
-//        appModel?.onLogoutException()
-//    } else {
-        throw throwable
-//    }
-}
-
-var defaultContext = SupervisorJob() + exceptionHandler
 
 operator fun <T> UpdatableState<T>.getValue(thisRef: Any?, property: KProperty<*>): T = value
 
@@ -125,4 +105,19 @@ fun <V, T : List<V>> UpdatableState<T>.collectAsMutableStateList(
             listen(key) { value = (it as List<V>).toMutableStateList() }
         }
     }
+}
+
+fun listenUpdates(
+    vararg states: UpdatableState<Any>,
+    onUpdate: () -> Unit
+): UpdatableState<Any> {
+    val updatable = UpdatableState<Any>(Unit)
+    states.forEach {
+        it.listen {
+            onUpdate()
+            updatable.post(Unit)
+        }
+    }
+
+    return updatable
 }

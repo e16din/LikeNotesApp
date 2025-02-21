@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import me.likenotesapp.sources.ButtonItem
+import me.likenotesapp.sources.RequestToPlatform
+import me.likenotesapp.sources.RequestToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,88 +40,128 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        RootStore()
+
         GlobalScope.launchWithHandler(Dispatchers.Main) {
             appFunction()
         }
     }
 
+    private fun RootStore() {
+        Platform.client.currentRequest.listen { request ->
+            when (request) {
+                RequestToPlatform.Initial -> {
+                    // do nothing
+                }
+
+                is RequestToPlatform.Save<*> -> request.response.post(true) //todo: implement Save
+            }
+        }
+    }
+
     suspend fun appFunction() {
-        println("start")
-        User.requester.request<Unit>(RequestData.Attention("Hello World!"))
-            .await()
-
-        println("step1")
-        User.requester.request<Unit>(RequestData.Attention("Are you ready?"))
-            .await()
-
-        val item = User.requester.request<StartScreenButtonViewModel>(
-            RequestData.Choice(
-                listOf(
-                    StartScreenButtonViewModel("Yes"),
-                    StartScreenButtonViewModel("No")
+        User.client.request<Unit>(RequestToUser.Attention("Привет мир!", "Привет!")) {
+            val yesItem = "Да"
+            val noItem = "Нет"
+            User.client.request<ButtonItem>(
+                RequestToUser.Choice(
+                    "Ты готов?",
+                    listOf(
+                        ButtonItem(yesItem),
+                        ButtonItem(noItem)
+                    )
                 )
-            )
-        ).await()
-        User.requester.request<Unit>(RequestData.Attention(item.name))
-            .await()
-        val note = User.requester.request<String>(RequestData.TextInput("Enter a Note"))
-            .await()
+            ) { item ->
+                when (item.name) {
+                    yesItem -> {
+                        User.client.request<String>(
+                            RequestToUser.TextInput(
+                                "Enter a Note",
+                                "Сохранить"
+                            )
+                        ) { note ->
+                            User.client.requestNotBlocked<Unit>(
+                                RequestToUser.Attention(
+                                    "Идет загрузка...",
+                                    isLoading = true
+                                )
+                            )
+                            Platform.client.request<Boolean>(RequestToPlatform.Save(note)) { success ->
+                                val message = if (success)
+                                    "Сохранение прошло успешно!"
+                                else
+                                    "Возникла ошибка при сохранении :("
+                                User.client.request<Unit>(
+                                    RequestToUser.Attention(
+                                        message,
+                                        "Океюшки"
+                                    )
+                                ) {
+                                    appFunction()
+                                }
+                            }
+                        }
+                    }
 
-        User.requester.request<Unit>(RequestData.Attention("Your Note: \n$note"))
-            .await()
+                    noItem -> {
+                        User.client.request<Unit>(
+                            RequestToUser.Attention(
+                                "Закончим на этом :)",
+                                "Ок"
+                            )
+                        ) {
+                            appFunction()
+                        }
+                    }
+                }
 
-        appFunction()
-
-//        val pass = User.requestText("get/text/password")
-//
-//
-//        val loginChoice = User.requestChoice("get/choice/login")
-//        loginChoice.await()
-//
-//        User.requestAttention("post/screen/loading")
-//        val loginResult = Backend.requestData("post/login", email + pass)
-//        loginResult.await()
-//
-//        Platform.requestDataSave("post/token/$", loginResult.token)
-//
-//        User.requestAttention("post/login/success/$", loginResult)
-//        delay(1000)
-//        User.requestAttention(if (loginResult) "post/screen/main" else "post/screen/auth")
+            }
+        }
     }
 }
 
 @Composable
 fun RootView() {
     println("Root")
-    val request = User.requester.request.collectAsState()
+    val request = User.client.currentRequest.collectAsState()
 
-    val data = request.value.data
+    val data = request.value
     println("data: $data")
     when (data) {
-        is RequestData.Choice<*> -> SelectItemScreen(data)
-        is RequestData.Attention -> MessageScreen(data)
-        is RequestData.TextInput -> InputTextScreen(data)
-        is RequestData.Pending -> CircularProgressIndicator()
+        is RequestToUser.Attention -> {
+            if (data.isLoading) {
+                PendingScreen(data)
+            } else {
+                MessageScreen(data)
+            }
+        }
 
+        is RequestToUser.TextInput -> InputTextScreen(data)
+        is RequestToUser.Choice<*> -> SelectItemScreen(data)
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun RootPreview() {
     LikeNotesAppTheme {
         RootView()
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <T> SelectItemScreen(data: RequestData.Choice<T>) {
+fun <T> SelectItemScreen(request: RequestToUser.Choice<T>) {
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.align(Alignment.Center)) {
-            this.items(items = data.items) { viewModel ->
+            stickyHeader {
+                Text(request.title)
+            }
+
+            items(items = request.items) { viewModel ->
                 when (viewModel) {
-                    is StartScreenButtonViewModel -> Button(onClick = {
-                        data.chosen.post(viewModel)
+                    is ButtonItem -> Button(onClick = {
+                        request.response.post(viewModel)
                     }) {
                         Text(viewModel.name)
                     }
@@ -130,26 +173,23 @@ fun <T> SelectItemScreen(data: RequestData.Choice<T>) {
     }
 }
 
-data class StartScreenButtonViewModel(val name: String)
-
-
 @Composable
-fun InputTextScreen(data: RequestData.TextInput) {
+fun InputTextScreen(request: RequestToUser.TextInput) {
     var text by remember { mutableStateOf("") }
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(Modifier.weight(1f))
         TextField(
             value = text,
-            label = { Text(data.label) },
+            label = { Text(request.label) },
             onValueChange = {
                 text = it
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Button(onClick = {
-            data.input.post(text)
+            request.response.post(text)
         }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text("Готово")
+            Text(request.actionName)
         }
         Spacer(Modifier.weight(1f))
     }
@@ -157,69 +197,31 @@ fun InputTextScreen(data: RequestData.TextInput) {
 }
 
 @Composable
-fun MessageScreen(data: RequestData.Attention) {
+fun MessageScreen(request: RequestToUser.Attention) {
     println("MessageScreen")
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(Modifier.weight(1f))
         Text(
-            data.message, modifier = Modifier
-                .align(Alignment.Center)
-                .clickable {
-                    data.next.post(Unit)
-                })
+            request.message, modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Button(onClick = {
+            request.response.post(Unit)
+        }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text(request.actionName)
+        }
+        Spacer(Modifier.weight(1f))
     }
 }
 
-//data class Item<T>(val viewModel: T)
-sealed class RequestData() {
-    class Attention(
-        val message: String,
-        val next: UpdatableState<Unit> = UpdatableState(Unit)
-    ) : RequestData()
-
-    class TextInput(
-        val label: String,
-        val input: UpdatableState<String> = UpdatableState("")
-    ) : RequestData()
-
-    class Choice<T>(
-        val items: List<T>,
-        var chosen: UpdatableState<T?> = UpdatableState(null)
-    ) : RequestData()
-
-    object Pending : RequestData()
-}
-
-class Request(
-    val data: RequestData
-)
-
-class Requester {
-    val requests = mutableListOf<Request>()
-    val request = UpdatableState<Request>(Request(RequestData.Pending))
-
-    @Suppress("UNCHECKED_CAST")
-    inline fun <reified T> request(data: RequestData): UpdatableState<T> {
-        val newRequest = Request(data)
-        requests.add(newRequest)
-        println("newRequest: ${newRequest.data}")
-        request.post(newRequest)
-        return when (data) {
-            is RequestData.Attention -> data.next
-            is RequestData.Choice<*> -> data.chosen
-            is RequestData.TextInput -> data.input
-            else -> {
-                UpdatableState(null)
-                //throw IllegalArgumentException()
-            }
-        } as UpdatableState<T>
+@Composable
+fun PendingScreen(request: RequestToUser.Attention) {
+    println("PendingScreen")
+    Box(modifier = Modifier.fillMaxSize()) {
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
     }
 }
 
-object User {
-    val requester = Requester()
-}
 
-object Backend
-object Platform
+
 
 

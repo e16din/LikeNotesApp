@@ -2,7 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.ksp)
 }
+
+
 
 android {
     namespace = "me.likenotesapp"
@@ -28,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true
@@ -40,6 +43,10 @@ android {
 }
 
 dependencies {
+    //
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
