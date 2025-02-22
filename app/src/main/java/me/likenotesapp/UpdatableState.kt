@@ -5,24 +5,15 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 
-
-operator fun <T> UpdatableState<T>.getValue(thisRef: Any?, property: KProperty<*>): T = value
 
 class UpdatableState<T>(initial: T) {
 
@@ -41,11 +32,15 @@ class UpdatableState<T>(initial: T) {
         } ?: listOf(onChanged)
     }
 
-    suspend fun await() = suspendCoroutine { continuation ->
-        listen {
-            continuation.resumeWith(
-                Result.success(it)
-            )
+    suspend fun await(): T {
+        return suspendCoroutine { continuation ->
+            val key = "await"
+            listen(key) {
+                free(key)
+                continuation.resumeWith(
+                    Result.success(it)
+                )
+            }
         }
     }
 

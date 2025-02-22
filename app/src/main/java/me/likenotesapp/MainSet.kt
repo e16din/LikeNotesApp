@@ -8,20 +8,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import me.likenotesapp.sources.PlatformClient
-import me.likenotesapp.sources.UserClient
+import me.likenotesapp.requests.Client
 
-object User {
-    var client = UserClient() // NOTE: it is var for Unit Tests
-}
 
-object Platform {
-    var client = PlatformClient() // NOTE: it is var for Unit Tests
-}
-
-object Backend {
-    // do nothing
-}
+object User : Client()
+object Platform : Client()
+object Backend : Client()
 
 inline fun CoroutineScope.launchWithHandler(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,

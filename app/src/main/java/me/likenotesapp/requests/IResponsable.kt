@@ -1,4 +1,4 @@
-package me.likenotesapp.sources
+package me.likenotesapp.requests
 
 import me.likenotesapp.UpdatableState
 
