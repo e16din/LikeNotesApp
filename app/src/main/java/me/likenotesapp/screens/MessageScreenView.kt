@@ -11,19 +11,19 @@ import androidx.compose.ui.Modifier
 import me.likenotesapp.requests.ToUser
 
 @Composable
-fun MessageScreen(request: ToUser.PostMessage) {
+fun MessageScreenView(request: ToUser.PostMessage) {
     println("MessageScreen")
-    Column(modifier = Modifier.Companion.fillMaxSize()) {
-        Spacer(Modifier.Companion.weight(1f))
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(Modifier.weight(1f))
         Text(
             request.message,
-            modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally)
+            modifier = Modifier.align(Alignment.Companion.CenterHorizontally)
         )
         Button(onClick = {
             request.response.post(Unit)
-        }, modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally)) {
+        }, modifier = Modifier.align(Alignment.Companion.CenterHorizontally)) {
             Text(request.actionName)
         }
-        Spacer(Modifier.Companion.weight(1f))
+        Spacer(Modifier.weight(1f))
     }
 }

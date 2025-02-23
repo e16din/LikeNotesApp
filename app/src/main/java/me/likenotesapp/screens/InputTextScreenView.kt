@@ -16,24 +16,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
 @Composable
-fun InputTextScreen(request: ToUser.GetTextInput) {
+fun InputTextScreenView(request: ToUser.GetTextInput) {
     var text by remember { mutableStateOf(request.initial ?: "") }
-    Column(modifier = Modifier.Companion.fillMaxSize()) {
-        Spacer(Modifier.Companion.weight(1f))
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(Modifier.weight(1f))
         TextField(
             value = text,
             label = { Text(request.label) },
             onValueChange = {
                 text = it
             },
-            modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally)
+            modifier = Modifier.align(Alignment.Companion.CenterHorizontally)
         )
         Button(onClick = {
             request.response.post(text)
-        }, modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally)) {
+        }, modifier = Modifier.align(Alignment.Companion.CenterHorizontally)) {
             Text(request.actionName)
         }
-        Spacer(Modifier.Companion.weight(1f))
+        Spacer(Modifier.weight(1f))
     }
 
 }

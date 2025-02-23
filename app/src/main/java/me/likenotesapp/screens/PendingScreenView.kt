@@ -11,15 +11,15 @@ import androidx.compose.ui.Modifier
 import me.likenotesapp.requests.ToUser
 
 @Composable
-fun PendingScreen(request: ToUser.PostLoadingMessage) {
+fun PendingScreenView(request: ToUser.PostLoadingMessage) {
     println("PendingScreen")
-    Column(modifier = Modifier.Companion.fillMaxSize()) {
-        Spacer(Modifier.Companion.weight(1f))
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(Modifier.weight(1f))
         Text(
             text = request.message,
-            modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally)
+            modifier = Modifier.align(Alignment.Companion.CenterHorizontally)
         )
-        CircularProgressIndicator(modifier = Modifier.Companion.align(Alignment.Companion.CenterHorizontally))
-        Spacer(Modifier.Companion.weight(1f))
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Companion.CenterHorizontally))
+        Spacer(Modifier.weight(1f))
     }
 }

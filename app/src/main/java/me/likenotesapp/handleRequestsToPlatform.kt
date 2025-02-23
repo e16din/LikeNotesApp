@@ -16,6 +16,11 @@ fun handleRequestsToPlatform(context: Application) {
                     request.response.post(true)
                 }
 
+                is ToPlatform.RemoveNote -> {
+                    notesDatabase.noteDao().delete(request.note)
+                    request.response.post(true)
+                }
+
                 is ToPlatform.UpdateNote -> {
                     notesDatabase.noteDao().update(request.note)
                     request.response.post(true)

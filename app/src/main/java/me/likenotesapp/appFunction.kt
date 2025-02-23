@@ -1,16 +1,18 @@
 package me.likenotesapp
 
+import androidx.compose.runtime.toMutableStateList
 import me.likenotesapp.requests.ToPlatform
 import me.likenotesapp.requests.ToUser
 
-enum class MainIntent(val text: String) {
+enum class MainChoice(val text: String) {
     AddNote("Добавить заметку"),
     ReadNotes("Читать заметки")
 }
 
-enum class NotesIntent() {
-    Back,
-    Remove
+sealed class NotesChoice() {
+    class Back : NotesChoice()
+    data class Remove(val note: Note) : NotesChoice()
+    data class Select(val note: Note) : NotesChoice()
 }
 
 suspend fun appFunction() {
@@ -68,47 +70,50 @@ suspend fun appFunction() {
         )
     }
 
+    suspend fun readNotes() {
+        Platform.request<List<Note>>(ToPlatform.GetNotes { notes ->
+            User.request<Any>(
+                ToUser.GetChoice<Note>(
+                    title = "Заметки",
+                    items = notes.toMutableStateList(),
+                )
+                { choice ->
+                    println("choice: $choice")
+                    when (choice) {
+
+                        is NotesChoice.Back -> User.requestPrevious()
+                        is NotesChoice.Remove -> Platform.request<Boolean>(
+
+                            ToPlatform.RemoveNote(choice.note) {
+                                readNotes()
+                            }
+                        )
+
+                        is NotesChoice.Select -> editNote(choice.note)
+                    }
+                })
+        })
+    }
+
     User.request<Unit>(
         ToUser.PostMessage(
             message = "Рад вас видеть снова :)",
             actionName = "Привет!"
         )
         {
-            User.request<MainIntent>(
+            User.request<MainChoice>(
                 ToUser.GetChoice(
                     title = "Чего пожелаете?",
-                    items = MainIntent.entries
+                    items = MainChoice.entries
                 )
                 { item ->
                     when (item) {
-                        MainIntent.AddNote -> {
+                        MainChoice.AddNote -> {
                             editNote()
                         }
 
-                        MainIntent.ReadNotes -> {
-                            Platform.request<List<Note>>(ToPlatform.GetNotes { notes ->
-                                User.request<Any>(
-                                    ToUser.GetChoice<Note>(
-                                        title = "Заметки",
-                                        items = notes,
-                                    )
-                                    { choice ->
-                                        when (choice) {
-                                            is Note -> editNote(choice)
-                                            is NotesIntent -> {
-                                                when (choice) {
-                                                    NotesIntent.Back -> {
-                                                        User.requestPrevious()
-                                                    }
-
-                                                    NotesIntent.Remove -> {
-                                                        // todo
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    })
-                            })
+                        MainChoice.ReadNotes -> {
+                            readNotes()
                         }
                     }
                 })

@@ -38,7 +38,8 @@ open class Client {
     }
 
     suspend fun requestPrevious() {
-        val previous = requests.dropLast(1).last()
+        var previous = requests.dropLast(1).last()
+        println("previous: $previous")
         clear()
 
         requests.add(previous)

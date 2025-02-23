@@ -1,10 +1,10 @@
 package me.likenotesapp
 
 import androidx.compose.runtime.Composable
-import me.likenotesapp.screens.InputTextScreen
-import me.likenotesapp.screens.MessageScreen
-import me.likenotesapp.screens.PendingScreen
-import me.likenotesapp.screens.SelectItemScreen
+import me.likenotesapp.screens.InputTextScreenView
+import me.likenotesapp.screens.MessageScreenView
+import me.likenotesapp.screens.PendingScreenView
+import me.likenotesapp.screens.ItemsScreenView
 import me.likenotesapp.requests.ToUser
 
 @Composable
@@ -15,9 +15,9 @@ fun handleRequestsToUser() {
     val request = requestState.value
     println("data: $request")
     when (request) {
-        is ToUser.PostMessage -> MessageScreen(request)
-        is ToUser.PostLoadingMessage -> PendingScreen(request)
-        is ToUser.GetTextInput -> InputTextScreen(request)
-        is ToUser.GetChoice<*> -> SelectItemScreen(request)
+        is ToUser.PostMessage -> MessageScreenView(request)
+        is ToUser.PostLoadingMessage -> PendingScreenView(request)
+        is ToUser.GetTextInput -> InputTextScreenView(request)
+        is ToUser.GetChoice<*> -> ItemsScreenView(request)
     }
 }
