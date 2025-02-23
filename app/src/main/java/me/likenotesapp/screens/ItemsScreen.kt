@@ -3,14 +3,20 @@ package me.likenotesapp.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,30 +24,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import me.likenotesapp.MainIntent
 import me.likenotesapp.Note
+import me.likenotesapp.NotesIntent
 import me.likenotesapp.requests.ToUser
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> SelectItemScreen(request: ToUser.GetChoice<T>) {
     Box(modifier = Modifier.Companion.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.Companion.align(Alignment.Companion.Center)) {
-            stickyHeader {
-                Text(text = request.title)
-            }
 
-            items(items = request.items) { item ->
-                when (item) {
-                    is MainIntent -> {
+        when (request.items.first()) {
+            is MainIntent -> {
+                LazyColumn(modifier = Modifier.Companion.align(Alignment.Companion.Center)) {
+                    stickyHeader {
+                        Text(text = request.title)
+                    }
+
+                    items(items = request.items) { item ->
                         Button(
                             modifier = Modifier.requiredWidth(200.dp),
                             onClick = {
                                 request.response.post(item)
                             }) {
-                            Text(item.text)
+                            Text((item as MainIntent).text)
                         }
                     }
+                }
+            }
 
-                    is Note -> {
+            is Note -> {
+                LazyColumn(modifier = Modifier.Companion.align(Alignment.Companion.Center)) {
+                    stickyHeader {
+                        Spacer(Modifier.height(64.dp))//Todo: remove it
+                        IconButton(onClick = {
+                            request.response.post(NotesIntent.Back)
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
+                        }
+                        Text(text = request.title)
+                    }
+
+                    items(items = request.items) { item ->
                         Card(
                             Modifier.Companion
                                 .fillMaxWidth()
@@ -50,17 +72,17 @@ fun <T> SelectItemScreen(request: ToUser.GetChoice<T>) {
                                     request.response.post(item)
                                 }) {
                             Text(
-                                item.text, modifier = Modifier.Companion.padding(
+                                (item as Note).text, modifier = Modifier.Companion.padding(
                                     horizontal = 16.dp,
                                     vertical = 12.dp
                                 )
                             )
                         }
                     }
-
-                    else -> Text("Not implemented")
                 }
             }
+
+            else -> Text("Not implemented")
         }
     }
 }

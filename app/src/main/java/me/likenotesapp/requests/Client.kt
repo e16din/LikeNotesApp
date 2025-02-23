@@ -6,12 +6,11 @@ open class Client {
     val requests = mutableListOf<IRequest>(InitialRequest)
     val currentRequest = UpdatableState<IRequest>(InitialRequest)
 
-    suspend inline fun <reified T> request(
-        request: IRequest,
-        onResponse: (T) -> Unit
-    ) {
-        val response = requestUpdatable<T>(request).await()
-        onResponse(response)
+    suspend inline fun <reified T> request(request: IRequest) {
+        requestUpdatable<T>(request).await()
+        if (request is IResponsable<*>) {
+            request.invokeOnResponse()
+        }
     }
 
     fun requestNotBlocked(request: ToUser) {
@@ -36,6 +35,19 @@ open class Client {
         requests.clear()
         requests.add(InitialRequest)
         currentRequest.post(InitialRequest)
+    }
+
+    suspend fun requestPrevious() {
+        val previous = requests.dropLast(1).last()
+        clear()
+
+        requests.add(previous)
+        currentRequest.post(previous)
+
+        if (previous is IResponsable<*>) {
+            previous.response.await()
+            previous.invokeOnResponse()
+        }
     }
 }
 

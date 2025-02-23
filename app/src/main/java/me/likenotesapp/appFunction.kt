@@ -8,6 +8,11 @@ enum class MainIntent(val text: String) {
     ReadNotes("Читать заметки")
 }
 
+enum class NotesIntent() {
+    Back,
+    Remove
+}
+
 suspend fun appFunction() {
     suspend fun reset() {
         User.clear()
@@ -15,48 +20,52 @@ suspend fun appFunction() {
         appFunction()
     }
 
-    suspend fun editNote(initial:Note? = null) {
+    suspend fun editNote(initial: Note? = null) {
         User.request<String>(
             ToUser.GetTextInput(
                 label = "Заметка",
                 initial = initial?.text,
                 actionName = "Сохранить"
-            )
-        ) { noteText ->
-            User.requestNotBlocked(
-                ToUser.PostLoadingMessage("Идет загрузка...")
-            )
 
-            val nowMs = System.currentTimeMillis()
-
-            val request = if(initial == null) {
-                val note = Note(
-                    text = noteText,
-                    createdMs = nowMs,
-                    updatedMs = nowMs
+            ) { noteText ->
+                User.requestNotBlocked(
+                    ToUser.PostLoadingMessage("Идет загрузка...")
                 )
-                ToPlatform.AddNote(note)
-            } else {
-                ToPlatform.UpdateNote(initial.apply {
-                    text = noteText
-                    updatedMs = nowMs
-                })
+
+                val nowMs = System.currentTimeMillis()
+                Platform.request<Boolean>(
+                    if (initial == null) {
+                        val note = Note(
+                            text = noteText,
+                            createdMs = nowMs,
+                            updatedMs = nowMs
+                        )
+                        ToPlatform.AddNote(note)
+
+                    } else {
+                        ToPlatform.UpdateNote(initial.apply {
+                            text = noteText
+                            updatedMs = nowMs
+                        })
+
+                    }.apply {
+                        onResponse = { success ->
+                            val message = if (success)
+                                "Сохранение прошло успешно!"
+                            else
+                                "Возникла ошибка при сохранении :("
+                            User.request<Unit>(
+                                ToUser.PostMessage(
+                                    message = message,
+                                    actionName = "Океюшки"
+                                ) {
+                                    reset()
+                                })
+                        }
+                    }
+                )
             }
-            Platform.request<Boolean>(request) { success ->
-                val message = if (success)
-                    "Сохранение прошло успешно!"
-                else
-                    "Возникла ошибка при сохранении :("
-                User.request<Unit>(
-                    ToUser.PostMessage(
-                        message = message,
-                        actionName = "Океюшки"
-                    )
-                ) {
-                    reset()
-                }
-            }
-        }
+        )
     }
 
     User.request<Unit>(
@@ -64,31 +73,44 @@ suspend fun appFunction() {
             message = "Рад вас видеть снова :)",
             actionName = "Привет!"
         )
-    ) {
-        User.request<MainIntent>(
-            ToUser.GetChoice(
-                title = "Чего пожелаете?",
-                items = MainIntent.entries
-            )
-        ) { item ->
-            when (item) {
-                MainIntent.AddNote -> {
-                    editNote()
-                }
+        {
+            User.request<MainIntent>(
+                ToUser.GetChoice(
+                    title = "Чего пожелаете?",
+                    items = MainIntent.entries
+                )
+                { item ->
+                    when (item) {
+                        MainIntent.AddNote -> {
+                            editNote()
+                        }
 
-                MainIntent.ReadNotes -> {
-                    Platform.request<List<Note>>(ToPlatform.GetNotes()) { notes ->
-                        User.request<Note>(
-                            ToUser.GetChoice<Note>(
-                                title = "Заметки",
-                                items = notes
-                            )
-                        ) { note ->
-                            editNote(note)
+                        MainIntent.ReadNotes -> {
+                            Platform.request<List<Note>>(ToPlatform.GetNotes { notes ->
+                                User.request<Any>(
+                                    ToUser.GetChoice<Note>(
+                                        title = "Заметки",
+                                        items = notes,
+                                    )
+                                    { choice ->
+                                        when (choice) {
+                                            is Note -> editNote(choice)
+                                            is NotesIntent -> {
+                                                when (choice) {
+                                                    NotesIntent.Back -> {
+                                                        User.requestPrevious()
+                                                    }
+
+                                                    NotesIntent.Remove -> {
+                                                        // todo
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    })
+                            })
                         }
                     }
-                }
-            }
-        }
-    }
+                })
+        })
 }
