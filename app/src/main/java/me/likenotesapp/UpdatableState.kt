@@ -7,7 +7,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -15,24 +14,30 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 
 
-class UpdatableState<T>(initial: T) {
+class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = actualScope) {
+    var values = mutableListOf<T?>()
 
-    private var _value: T = initial
+    init {
+        initial?.let {
+            values.add(initial)
+        }
+    }
+
     var value: T
-        get() = _value
+        get() = values.lastOrNull() ?: throw NullPointerException("Check this value")
         set(value) {
             throw IllegalStateException("Use '.post($value)' instead")
         }
 
-    private var callbacks = mutableMapOf<Any, List<(value: T) -> Unit>>()
+    private var callbacks = mutableMapOf<Any, List<(value: T?) -> Unit>>()
 
-    fun listen(key: Any = Unit, onChanged: (value: T) -> Unit) {
-        callbacks[key] = callbacks[key]?.let {
-            it + onChanged
+    fun listen(key: Any = Unit, onChanged: (value: T?) -> Unit) {
+        callbacks[key] = callbacks[key]?.let { callbacks ->
+            callbacks + onChanged
         } ?: listOf(onChanged)
     }
 
-    suspend fun await(): T {
+    suspend fun await(): T? {
         return suspendCoroutine { continuation ->
             val key = "await"
             listen(key) {
@@ -44,22 +49,26 @@ class UpdatableState<T>(initial: T) {
         }
     }
 
-
-    fun post(value: T, scope: CoroutineScope = GlobalScope, ifNew: Boolean = false) {
-        if (!ifNew || (ifNew && _value != value)) {
+    fun post(newValue: T?, ifNew: Boolean = false) {
+        if (!ifNew || (ifNew && value != newValue)) {
+            values.add(newValue)
             scope.launchWithHandler(Dispatchers.Main) {
-                _value = value
-                callbacks.keys.forEach {
-                    callbacks[it]?.forEach { onChange ->
-                        onChange(value)
+                callbacks.keys.forEach { key ->
+                    callbacks[key]?.forEach { onChange ->
+                        onChange(newValue)
                     }
+                }
+                values.forEach {
+                    println("list: $it")
                 }
             }
         }
     }
 
     fun free(key: Any) {
-        callbacks.remove(key)
+        scope.launchWithHandler(Dispatchers.Main) {
+            callbacks.remove(key)
+        }
     }
 
     fun repostTo(state: UpdatableState<T>, key: Any = Unit) {
@@ -67,14 +76,18 @@ class UpdatableState<T>(initial: T) {
             state.post(value)
         }
     }
+
+    fun pop(): T {
+        return values.removeAt(values.lastIndex) ?: throw NullPointerException()
+    }
 }
 
 @Composable
-fun <T : R, R> UpdatableState<T>.collectAsState(
+fun <T : R, R : Any?> UpdatableState<T>.collectAsState(
     key: KClass<*> = Unit::class,
-    initial: R = this.value,
+    initial: R? = null,
     context: CoroutineContext = EmptyCoroutineContext
-): State<R> = produceState(initial, this.value) {
+): State<R?> = produceState(initial, if (initial == null) null else this.value) {
     if (context == EmptyCoroutineContext) {
         listen(key) { value = it }
 

@@ -1,6 +1,7 @@
 package me.likenotesapp
 
 import androidx.compose.runtime.toMutableStateList
+import kotlinx.coroutines.delay
 import me.likenotesapp.requests.ToPlatform
 import me.likenotesapp.requests.ToUser
 
@@ -9,105 +10,34 @@ enum class MainChoice(val text: String) {
     ReadNotes("Читать заметки")
 }
 
-sealed class NotesChoice() {
-    class Back : NotesChoice()
+interface IChoice
+
+class Back : IChoice
+class Cancel : IChoice
+
+sealed class NotesChoice() : IChoice {
     data class Remove(val note: Note) : NotesChoice()
     data class Select(val note: Note) : NotesChoice()
 }
 
 suspend fun appFunction() {
-    suspend fun reset() {
-        User.clear()
-        Platform.clear()
-        appFunction()
-    }
-
-    suspend fun editNote(initial: Note? = null) {
-        User.request<String>(
-            ToUser.GetTextInput(
-                label = "Заметка",
-                initial = initial?.text,
-                actionName = "Сохранить"
-
-            ) { noteText ->
-                User.requestNotBlocked(
-                    ToUser.PostLoadingMessage("Идет загрузка...")
-                )
-
-                val nowMs = System.currentTimeMillis()
-                Platform.request<Boolean>(
-                    if (initial == null) {
-                        val note = Note(
-                            text = noteText,
-                            createdMs = nowMs,
-                            updatedMs = nowMs
-                        )
-                        ToPlatform.AddNote(note)
-
-                    } else {
-                        ToPlatform.UpdateNote(initial.apply {
-                            text = noteText
-                            updatedMs = nowMs
-                        })
-
-                    }.apply {
-                        onResponse = { success ->
-                            val message = if (success)
-                                "Сохранение прошло успешно!"
-                            else
-                                "Возникла ошибка при сохранении :("
-                            User.request<Unit>(
-                                ToUser.PostMessage(
-                                    message = message,
-                                    actionName = "Океюшки"
-                                ) {
-                                    reset()
-                                })
-                        }
-                    }
-                )
-            }
-        )
-    }
-
-    suspend fun readNotes() {
-        Platform.request<List<Note>>(ToPlatform.GetNotes { notes ->
-            User.request<Any>(
-                ToUser.GetChoice<Note>(
-                    title = "Заметки",
-                    items = notes.toMutableStateList(),
-                )
-                { choice ->
-                    println("choice: $choice")
-                    when (choice) {
-
-                        is NotesChoice.Back -> User.requestPrevious()
-                        is NotesChoice.Remove -> Platform.request<Boolean>(
-
-                            ToPlatform.RemoveNote(choice.note) {
-                                readNotes()
-                            }
-                        )
-
-                        is NotesChoice.Select -> editNote(choice.note)
-                    }
-                })
-        })
-    }
-
-    User.request<Unit>(
+    User.request(
         ToUser.PostMessage(
             message = "Рад вас видеть снова :)",
             actionName = "Привет!"
         )
         {
-            User.request<MainChoice>(
+            User.request(
                 ToUser.GetChoice(
                     title = "Чего пожелаете?",
                     items = MainChoice.entries
                 )
-                { item ->
-                    when (item) {
+                { choice ->
+                    when (choice) {
+                        is Back -> {
+                            User.requestPrevious()
+                        }
+
                         MainChoice.AddNote -> {
                             editNote()
                         }
@@ -115,6 +45,97 @@ suspend fun appFunction() {
                         MainChoice.ReadNotes -> {
                             readNotes()
                         }
+                    }
+                })
+        })
+}
+
+suspend fun resetTo() {
+    User.clearAll()
+    Platform.clearAll()
+    appFunction()
+}
+
+suspend fun editNote(initial: Note? = null) {
+    User.request(
+        ToUser.GetTextInput(
+            title = "Заметка",
+            label = "Заметка",
+            initial = initial?.text,
+            actionName = "Сохранить"
+
+        ) { input ->
+            when (input) {
+                is Back -> {
+                    User.requestPrevious()
+                }
+
+                is String -> {
+                    User.request(
+                        ToUser.PostLoadingMessage("Идет загрузка...") { input ->
+                            if (input is Cancel) {
+                                User.requestPrevious()
+                            }
+                        },
+                        isBlocked = false
+                    )
+                    delay(2000)
+
+                    val nowMs = System.currentTimeMillis()
+                    Platform.request<Unit>(
+                        if (initial == null) {
+                            val note = Note(
+                                text = input,
+                                createdMs = nowMs,
+                                updatedMs = nowMs
+                            )
+                            ToPlatform.AddNote(note)
+
+                        } else {
+                            ToPlatform.UpdateNote(initial.apply {
+                                text = input
+                                updatedMs = nowMs
+                            })
+
+                        }.apply {
+                            onResponse = {
+                                val message = "Заметка сохранена"
+
+                                User.request(
+                                    ToUser.PostMessage(
+                                        message = message,
+                                        actionName = "Океюшки"
+                                    ) {
+                                        resetTo()
+                                    })
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    )
+}
+
+suspend fun readNotes() {
+    Platform.request<List<Note>>(
+        ToPlatform.GetNotes { notes ->
+            User.request(
+                ToUser.GetChoice(
+                    title = "Заметки",
+                    items = notes.toMutableStateList(),
+                )
+                { choice ->
+                    println("choice: $choice")
+                    when (choice) {
+                        is Back -> User.requestPrevious()
+                        is NotesChoice.Remove -> Platform.request<Unit>(
+                            ToPlatform.RemoveNote(choice.note) {
+                                readNotes()
+                            }
+                        )
+
+                        is NotesChoice.Select -> editNote(choice.note)
                     }
                 })
         })
