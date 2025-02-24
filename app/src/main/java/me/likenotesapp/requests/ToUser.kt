@@ -1,16 +1,18 @@
 package me.likenotesapp.requests
 
-sealed class ToUser() : IRequest, IHasAnyResponse {
+import me.likenotesapp.UpdatableState
+
+sealed class ToUser() : IRequest<Any> {
+    override val response: UpdatableState<Any> = UpdatableState<Any>()
 
     data class PostMessage(
         val message: String,
         val actionName: String = "Дальше",
-        override var onResponse: (suspend (Any) -> Unit)? = null
-    ) : ToUser()
+        ) : ToUser()
 
     data class PostLoadingMessage(
         val message: String = "",
-        override var onResponse: (suspend (Any) -> Unit)? = null
+
     ) : ToUser()
 
     data class GetTextInput(
@@ -18,12 +20,11 @@ sealed class ToUser() : IRequest, IHasAnyResponse {
         val label: String,
         val initial: String? = null,
         val actionName: String = "Дальше",
-        override var onResponse: (suspend (Any) -> Unit)? = null
+
     ) : ToUser()
 
     data class GetChoice(
         val title: String,
         val items: List<Any>,
-        override var onResponse: (suspend (Any) -> Unit)? = null
     ) : ToUser()
 }

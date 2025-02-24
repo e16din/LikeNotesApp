@@ -29,7 +29,6 @@ import me.likenotesapp.Back
 import me.likenotesapp.MainChoice
 import me.likenotesapp.Note
 import me.likenotesapp.NotesChoice
-import me.likenotesapp.User
 import me.likenotesapp.requests.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
@@ -39,15 +38,15 @@ fun ItemsScreenView(request: ToUser.GetChoice) {
     val oneItem = request.items.first()
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         stickyHeader {
-            HeadView(request.title, onClick = {
-                User.response.post(Back())
+            HeadView(request.title, onBackClick = {
+                request.response.post(Back())
             })
         }
 
         items(items = request.items.toMutableStateList()) { item ->
             when (oneItem) {
                 is MainChoice -> ButtonItemView(request, item)
-                is Note -> NoteItemView(item)
+                is Note -> NoteItemView(request, item)
                 else -> Text("Not implemented")
             }
         }
@@ -61,7 +60,7 @@ fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
         Button(
             modifier = Modifier.requiredWidth(200.dp).align(Alignment.Center),
             onClick = {
-                User.response.post(item)
+                request.response.post(item)
             }
         ) {
 
@@ -71,11 +70,11 @@ fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
 }
 
 @Composable
-fun NoteItemView(item: Any?) {
+fun NoteItemView(request: ToUser.GetChoice, item: Any?) {
     item as Note
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            User.response.post(NotesChoice.Remove(item))
+            request.response.post(NotesChoice.Remove(item))
             true
         })
 
@@ -104,7 +103,7 @@ fun NoteItemView(item: Any?) {
                 .fillMaxWidth()
                 .padding(bottom = 4.dp)
                 .clickable {
-                    User.response.post(NotesChoice.Select(item))
+                    request.response.post(NotesChoice.Select(item))
                 }) {
             Text(
                 item.text, modifier = Modifier.padding(

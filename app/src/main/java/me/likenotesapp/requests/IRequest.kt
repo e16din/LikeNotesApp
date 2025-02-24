@@ -1,3 +1,7 @@
 package me.likenotesapp.requests
 
-interface IRequest
+import me.likenotesapp.UpdatableState
+
+interface IRequest<T> {
+    val response: UpdatableState<T>
+}

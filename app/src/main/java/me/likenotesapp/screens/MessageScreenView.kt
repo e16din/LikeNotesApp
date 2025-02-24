@@ -24,7 +24,7 @@ fun MessageScreenView(request: ToUser.PostMessage) {
         },
         actionContent = {
             Button(onClick = {
-                User.response.post(Unit)
+                request.response.post(Unit)
             }, modifier = Modifier) {
                 Text(request.actionName)
             }

@@ -3,19 +3,13 @@ package me.likenotesapp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 
 
-class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = actualScope) {
-    var values = mutableListOf<T?>()
+class UpdatableState<T : Any?>(initial: T? = null) {
+    private var values = mutableListOf<T?>()
 
     init {
         initial?.let {
@@ -29,10 +23,10 @@ class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = a
             throw IllegalStateException("Use '.post($value)' instead")
         }
 
-    private var callbacks = mutableMapOf<Any, List<(value: T?) -> Unit>>()
+    private var listeners = mutableMapOf<Any, List<(value: T?) -> Unit>>()
 
     fun listen(key: Any = Unit, onChanged: (value: T?) -> Unit) {
-        callbacks[key] = callbacks[key]?.let { callbacks ->
+        listeners[key] = listeners[key]?.let { callbacks ->
             callbacks + onChanged
         } ?: listOf(onChanged)
     }
@@ -41,7 +35,7 @@ class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = a
         return suspendCoroutine { continuation ->
             val key = "await"
             listen(key) {
-                free(key)
+                freeListener(key)
                 continuation.resumeWith(
                     Result.success(it)
                 )
@@ -50,14 +44,17 @@ class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = a
     }
 
     fun post(newValue: T?, ifNew: Boolean = false) {
-        if (!ifNew || (ifNew && value != newValue)) {
-            values.add(newValue)
-            scope.launchWithHandler(Dispatchers.Main) {
-                callbacks.keys.forEach { key ->
-                    callbacks[key]?.forEach { onChange ->
+        actualScope.launchWithHandler(Dispatchers.Main) {
+            if (!ifNew || (ifNew && value != newValue)) {
+
+                values.add(newValue)
+
+                listeners.keys.forEach { key ->
+                    listeners[key]?.forEach { onChange ->
                         onChange(newValue)
                     }
                 }
+
                 values.forEach {
                     println("list: $it")
                 }
@@ -65,10 +62,12 @@ class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = a
         }
     }
 
-    fun free(key: Any) {
-        scope.launchWithHandler(Dispatchers.Main) {
-            callbacks.remove(key)
-        }
+    fun freeListener(key: Any) {
+        listeners.remove(key)
+    }
+
+    fun freeAllListeners() {
+        listeners.clear()
     }
 
     fun repostTo(state: UpdatableState<T>, key: Any = Unit) {
@@ -86,32 +85,9 @@ class UpdatableState<T : Any?>(initial: T? = null, val scope: CoroutineScope = a
 fun <T : R, R : Any?> UpdatableState<T>.collectAsState(
     key: KClass<*> = Unit::class,
     initial: R? = null,
-    context: CoroutineContext = EmptyCoroutineContext
 ): State<R?> = produceState(initial, if (initial == null) null else this.value) {
-    if (context == EmptyCoroutineContext) {
-        listen(key) { value = it }
-
-    } else withContext(context) {
-        listen(key) { value = it }
-    }
-}
-
-@Composable
-fun <V, T : List<V>> UpdatableState<T>.collectAsMutableStateList(
-    key: Any,
-    context: CoroutineContext = EmptyCoroutineContext
-): State<SnapshotStateList<V>> {
-
-    return produceState(
-        (this.value as List<V>).toMutableStateList(),
-        (this.value as List<V>).toMutableStateList(),
-        context
-    ) {
-        if (context == EmptyCoroutineContext) {
-            listen(key) { value = (it as List<V>).toMutableStateList() }
-        } else withContext(context) {
-            listen(key) { value = (it as List<V>).toMutableStateList() }
-        }
+    listen(key) {
+        value = it
     }
 }
 

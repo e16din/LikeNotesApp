@@ -7,29 +7,33 @@ import me.likenotesapp.requests.ToPlatform
 fun handleRequestsToPlatform(context: Application) {
     val notesDatabase = NotesDatabase.init(context)
 
-    Platform.requestUpdatable.listen { request ->
+    Platform.request.listen { request ->
         actualScope.launchWithHandler {
             when (request) {
                 is ToPlatform.AddNote -> {
                     notesDatabase.noteDao().insert(request.note)
-                    Platform.response.post(true)
+                    request.response.post(Unit)
                 }
 
                 is ToPlatform.RemoveNote -> {
                     notesDatabase.noteDao().delete(request.note)
-                    Platform.response.post(true)
+                    request.response.post(Unit)
                 }
 
                 is ToPlatform.UpdateNote -> {
                     notesDatabase.noteDao().update(request.note)
-                    Platform.response.post(true)
+                    request.response.post(Unit)
                 }
 
                 is ToPlatform.GetNotes -> {
                     val notesFlow = notesDatabase.noteDao().getAllNotes()
                     notesFlow.collect { notes ->
-                        Platform.response.post(notes)
+                        request.response.post(notes)
                     }
+                }
+
+                else -> {
+                    // do nothing
                 }
             }
         }

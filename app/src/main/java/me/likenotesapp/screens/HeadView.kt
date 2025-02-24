@@ -24,13 +24,13 @@ import me.likenotesapp.ui.theme.LikeNotesAppTheme
 inline fun HeadView(
     title: String,
     withBack: Boolean = true,
-    noinline onClick: () -> Unit = {},
+    noinline onBackClick: () -> Unit = {},
     content: @Composable (() -> Unit) = { DefaultHeaderContent(title) },
     actionContent: @Composable (() -> Unit) = { }
 ) {
     Column {
         if (withBack) {
-            IconButton(onClick = onClick) {
+            IconButton(onClick = onBackClick) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
             }
         }
