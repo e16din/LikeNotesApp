@@ -3,8 +3,8 @@ package me.likenotesapp
 import android.app.Application
 import me.likenotesapp.database.NotesDatabase
 import me.likenotesapp.developer.primitives.work
-import me.likenotesapp.requests.platform.Platform
-import me.likenotesapp.requests.platform.ToPlatform
+import me.likenotesapp.developer.primitives.requests.platform.Platform
+import me.likenotesapp.developer.primitives.requests.platform.ToPlatform
 
 var handleRequestsToPlatformInited = false
 fun handleRequestsToPlatform(context: Application) {
@@ -16,7 +16,7 @@ fun handleRequestsToPlatform(context: Application) {
 
     val notesDatabase = NotesDatabase.init(context)
 
-    Platform.request.onEach() { request ->
+    Platform.request.onEach { request ->
         when (request) {
             is ToPlatform.AddNote -> {
                 work(onDone = {

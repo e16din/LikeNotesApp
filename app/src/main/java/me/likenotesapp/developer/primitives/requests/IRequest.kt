@@ -1,4 +1,4 @@
-package me.likenotesapp.requests
+package me.likenotesapp.developer.primitives.requests
 
 import me.likenotesapp.developer.primitives.ForEach
 

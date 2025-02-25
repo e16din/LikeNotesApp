@@ -16,7 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.likenotesapp.Back
-import me.likenotesapp.requests.user.ToUser
+import me.likenotesapp.developer.primitives.requests.user.ToUser
+import me.likenotesapp.maxNoteLength
+
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
@@ -41,8 +43,11 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
         TextField(
             value = text,
             label = { Text(request.label) },
+            maxLines = 8,
             onValueChange = {
-                text = it
+                if (it.length <= maxNoteLength) {
+                    text = it
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()

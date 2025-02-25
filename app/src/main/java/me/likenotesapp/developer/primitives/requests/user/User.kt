@@ -1,7 +1,7 @@
-package me.likenotesapp.requests.user
+package me.likenotesapp.developer.primitives.requests.user
 
 import me.likenotesapp.developer.primitives.ForEach
-import me.likenotesapp.requests.IClient
+import me.likenotesapp.developer.primitives.requests.IClient
 
 object User : IClient {
     val request = ForEach<ToUser>()

@@ -1,7 +1,7 @@
-package me.likenotesapp.requests.user
+package me.likenotesapp.developer.primitives.requests.user
 
 import me.likenotesapp.developer.primitives.ForEach
-import me.likenotesapp.requests.IRequest
+import me.likenotesapp.developer.primitives.requests.IRequest
 
 sealed class ToUser() : IRequest<Any> {
     override val response: ForEach<Any> = ForEach<Any>()

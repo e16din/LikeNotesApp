@@ -1,8 +1,8 @@
-package me.likenotesapp.requests.platform
+package me.likenotesapp.developer.primitives.requests.platform
 
 import me.likenotesapp.Note
 import me.likenotesapp.developer.primitives.ForEach
-import me.likenotesapp.requests.IRequest
+import me.likenotesapp.developer.primitives.requests.IRequest
 
 
 sealed class ToPlatform() {

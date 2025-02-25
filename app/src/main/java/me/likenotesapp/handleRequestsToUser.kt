@@ -1,20 +1,21 @@
 package me.likenotesapp
 
-import androidx.compose.foundation.layout.Box
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import me.likenotesapp.developer.primitives.collectAsState
 import me.likenotesapp.developer.primitives.debug
+import me.likenotesapp.developer.primitives.requests.user.ToUser
+import me.likenotesapp.developer.primitives.requests.user.User
 import me.likenotesapp.screens.InputTextScreenView
+import me.likenotesapp.screens.ItemsScreenView
 import me.likenotesapp.screens.MessageScreenView
 import me.likenotesapp.screens.PendingScreenView
-import me.likenotesapp.screens.ItemsScreenView
-import me.likenotesapp.requests.user.ToUser
-import me.likenotesapp.requests.user.User
 
 @Composable
 fun handleRequestsToUser() {
@@ -28,7 +29,12 @@ fun handleRequestsToUser() {
     debug {
         println("handleRequestsToUser: ${request?.javaClass?.simpleName}")
     }
-    Box(
+
+    BackHandler {
+        request?.response?.next(Back())
+    }
+
+    Surface(
         modifier = Modifier
             .systemBarsPadding()
             .navigationBarsPadding()
