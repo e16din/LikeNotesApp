@@ -20,10 +20,12 @@ sealed class ToUser() : IRequest<Any> {
         val label: String,
         val initial: String? = null,
         val actionName: String = "Дальше",
+        val canBack: Boolean = true
     ) : ToUser()
 
     data class GetChoice(
         val title: String,
         val items: List<Any>,
+        val canBack: Boolean = true
     ) : ToUser()
 }

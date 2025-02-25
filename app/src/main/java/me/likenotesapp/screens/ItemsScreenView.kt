@@ -1,5 +1,11 @@
 package me.likenotesapp.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
@@ -36,14 +43,42 @@ import me.likenotesapp.ui.theme.LikeNotesAppTheme
 @Composable
 fun ItemsScreenView(request: ToUser.GetChoice) {
     val oneItem = request.items.first()
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+    val listState = rememberLazyListState()
+    val isVisible = !listState.canScrollBackward || listState.lastScrolledBackward
+
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         stickyHeader {
-            HeadView(request.title, onBackClick = {
-                request.response.next(Back())
-            })
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = fadeIn() + expandVertically(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                HeadView(
+                    title = request.title,
+                    withBack = request.canBack,
+                    onBackClick = {
+                        request.response.next(Back())
+                    }
+                )
+            }
         }
 
-        items(items = request.items.toMutableStateList()) { item ->
+        fun provideKey(it: Any) = when (oneItem) {
+            is MainChoice -> {
+                it
+            }
+
+            is Note -> {
+                (it as Note).id
+            }
+
+            else -> {
+                it
+            }
+        }
+
+        items(items = request.items.toMutableStateList(), key = { provideKey(it) }) { item ->
             when (oneItem) {
                 is MainChoice -> ButtonItemView(request, item)
                 is Note -> NoteItemView(request, item)
@@ -58,7 +93,9 @@ fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
     item as MainChoice
     Box(modifier = Modifier.fillMaxWidth()) {
         Button(
-            modifier = Modifier.requiredWidth(200.dp).align(Alignment.Center),
+            modifier = Modifier
+                .requiredWidth(200.dp)
+                .align(Alignment.Center),
             onClick = {
                 request.response.next(item)
             }

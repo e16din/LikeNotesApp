@@ -26,7 +26,7 @@ fun handleRequestsToUser() {
 
     val request = requestState.value
     debug {
-        println("handleRequestsToUser: $request")
+        println("handleRequestsToUser: ${request?.javaClass?.simpleName}")
     }
     Box(
         modifier = Modifier
@@ -41,7 +41,7 @@ fun handleRequestsToUser() {
             is ToUser.GetChoice -> ItemsScreenView(request)
             else -> {
                 debug {
-                    println("handleRequestsToUser: Not Implemented { ${request} }")
+                    println("handleRequestsToUser: Not Implemented { $request }")
                 }
             }
         }

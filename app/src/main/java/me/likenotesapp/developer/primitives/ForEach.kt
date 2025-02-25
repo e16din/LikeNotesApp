@@ -10,8 +10,9 @@ import kotlin.reflect.KClass
 // и может дополняться/изменяться
 class ForEach<T : Any>(initial: T? = null) {
 
-    private val values = mutableListOf<T>()
-    private var actions = Map<List<(value: T) -> Unit>>()
+    val values = mutableListOf<T>()
+    val actions = Map<List<(value: T) -> Unit>>()
+
     val it: T
         get() = values.lastOrNull() ?: throw NullPointerException("the values must not be empty")
 
@@ -25,14 +26,21 @@ class ForEach<T : Any>(initial: T? = null) {
         }
     }
 
-    fun onEach(key: Any = Unit, onChanged: (value: T) -> Unit) {
+    fun onEach(
+        key: Any = Unit,
+        resetOther: Boolean = false,
+        onChanged: (value: T) -> Unit
+    ) {
+        if (resetOther) {
+            actions.clear()
+        }
+
         val currentActions = actions[key] ?: emptyList()
         actions.add(key, currentActions + onChanged)
     }
 
     fun next(newValue: T, ifNew: Boolean = false) {
         if (!ifNew || (ifNew && it != newValue)) {
-
             values.add(newValue)
 
             actions.keys.forEach { key ->
@@ -40,21 +48,12 @@ class ForEach<T : Any>(initial: T? = null) {
                     onChange(newValue)
                 }
             }
-
-            debug {
-                values.forEach {
-                    println("list: $it")
-                }
-            }
         }
     }
 
-    fun freeActions(key: Any) {
-        actions.remove(key)
-    }
-
-    fun freeAllActions() {
+    fun reset() {
         actions.clear()
+        values.clear()
     }
 
     fun repostTo(foreach: ForEach<T>, key: Any = Unit) {
@@ -66,10 +65,6 @@ class ForEach<T : Any>(initial: T? = null) {
     fun pop(): T {
         return values.removeAt(values.lastIndex)
     }
-
-    fun isEmpty(): Boolean {
-        return values.isEmpty()
-    }
 }
 
 @Composable
@@ -80,21 +75,6 @@ fun <T : R, R : Any> ForEach<T>.collectAsState(key: KClass<*> = Unit::class): St
             value = it
         }
     }
-}
-
-fun listenUpdates(
-    vararg states: ForEach<Any>,
-    onUpdate: () -> Unit
-): ForEach<Any> {
-    val updatable = ForEach<Any>(Unit)
-    states.forEach {
-        it.onEach {
-            onUpdate()
-            updatable.next(Unit)
-        }
-    }
-
-    return updatable
 }
 
 

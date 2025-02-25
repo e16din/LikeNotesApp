@@ -6,10 +6,17 @@ import me.likenotesapp.developer.primitives.work
 import me.likenotesapp.requests.platform.Platform
 import me.likenotesapp.requests.platform.ToPlatform
 
+var handleRequestsToPlatformInited = false
 fun handleRequestsToPlatform(context: Application) {
+    if (handleRequestsToPlatformInited) {
+        return
+    }
+
+    handleRequestsToPlatformInited = true
+
     val notesDatabase = NotesDatabase.init(context)
 
-    Platform.request.onEach { request ->
+    Platform.request.onEach() { request ->
         when (request) {
             is ToPlatform.AddNote -> {
                 work(onDone = {

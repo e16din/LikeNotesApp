@@ -28,13 +28,15 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
             onBackClick = {
                 request.response.next(Back())
             },
+            withBack = request.canBack,
             actionContent = {
                 ElevatedButton(onClick = {
                     request.response.next(text)
                 }, modifier = Modifier) {
                     Text(request.actionName)
                 }
-            })
+            }
+        )
 
         TextField(
             value = text,

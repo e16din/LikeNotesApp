@@ -11,6 +11,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,30 +26,32 @@ inline fun HeadView(
     title: String,
     withBack: Boolean = true,
     noinline onBackClick: () -> Unit = {},
-    content: @Composable (() -> Unit) = { DefaultHeaderContent(title) },
-    actionContent: @Composable (() -> Unit) = { }
+    crossinline content: @Composable (() -> Unit) = { DefaultHeaderContent(title) },
+    crossinline actionContent: @Composable (() -> Unit) = { }
 ) {
-    Column {
-        if (withBack) {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
+    Surface {
+        Column {
+            if (withBack) {
+                IconButton(onClick = onBackClick) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "back")
+                }
             }
-        }
-        Box(
-            Modifier.Companion
-                .height(headHeight.dp)
-                .fillMaxWidth()
-        ) {
-            Box(modifier = Modifier.align(Alignment.Companion.Center)) {
-                content()
-            }
-
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                Modifier.Companion
+                    .height(headHeight.dp)
+                    .fillMaxWidth()
             ) {
-                actionContent()
+                Box(modifier = Modifier.align(Alignment.Companion.Center)) {
+                    content()
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    actionContent()
+                }
             }
         }
     }
