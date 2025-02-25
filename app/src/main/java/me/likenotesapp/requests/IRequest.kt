@@ -1,7 +1,7 @@
 package me.likenotesapp.requests
 
-import me.likenotesapp.UpdatableState
+import me.likenotesapp.developer.primitives.ForEach
 
-interface IRequest<T> {
-    val response: UpdatableState<T>
+interface IRequest<T: Any> {
+    val response: ForEach<T>
 }

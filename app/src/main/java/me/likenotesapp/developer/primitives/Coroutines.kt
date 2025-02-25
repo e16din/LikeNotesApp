@@ -1,4 +1,4 @@
-package me.likenotesapp
+package me.likenotesapp.developer.primitives
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -8,27 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import me.likenotesapp.requests.Client
-import me.likenotesapp.requests.ToPlatform
-import me.likenotesapp.requests.ToUser
-
-
-const val headHeight = 258
-
-object User : Client() {
-    val request = UpdatableState<ToUser>()
-    fun requestPrevious() {
-        request.pop()
-        val prevRequest = request.pop()
-        request.post(prevRequest)
-    }
-}
-
-object Platform : Client() {
-    val request = UpdatableState<ToPlatform>()
-}
-
-object Backend : Client()
 
 inline fun CoroutineScope.launchWithHandler(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,

@@ -1,5 +1,3 @@
 package me.likenotesapp.requests
 
-open class Client {
-}
-
+interface IClient

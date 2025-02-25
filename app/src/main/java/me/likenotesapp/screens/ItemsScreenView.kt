@@ -29,7 +29,7 @@ import me.likenotesapp.Back
 import me.likenotesapp.MainChoice
 import me.likenotesapp.Note
 import me.likenotesapp.NotesChoice
-import me.likenotesapp.requests.ToUser
+import me.likenotesapp.requests.user.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -39,7 +39,7 @@ fun ItemsScreenView(request: ToUser.GetChoice) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         stickyHeader {
             HeadView(request.title, onBackClick = {
-                request.response.post(Back())
+                request.response.next(Back())
             })
         }
 
@@ -60,7 +60,7 @@ fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
         Button(
             modifier = Modifier.requiredWidth(200.dp).align(Alignment.Center),
             onClick = {
-                request.response.post(item)
+                request.response.next(item)
             }
         ) {
 
@@ -74,7 +74,7 @@ fun NoteItemView(request: ToUser.GetChoice, item: Any?) {
     item as Note
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            request.response.post(NotesChoice.Remove(item))
+            request.response.next(NotesChoice.Remove(item))
             true
         })
 
@@ -103,7 +103,7 @@ fun NoteItemView(request: ToUser.GetChoice, item: Any?) {
                 .fillMaxWidth()
                 .padding(bottom = 4.dp)
                 .clickable {
-                    request.response.post(NotesChoice.Select(item))
+                    request.response.next(NotesChoice.Select(item))
                 }) {
             Text(
                 item.text, modifier = Modifier.padding(

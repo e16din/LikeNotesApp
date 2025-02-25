@@ -11,17 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.likenotesapp.Cancel
-import me.likenotesapp.requests.ToUser
+import me.likenotesapp.requests.user.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
 fun PendingScreenView(request: ToUser.PostLoadingMessage) {
-    println("PendingScreen")
     HeadView(
         title = request.message,
         withBack = false,
         onBackClick = {
-            request.response.post(Cancel())
+            request.response.next(Cancel())
         },
         content = {
             Column {

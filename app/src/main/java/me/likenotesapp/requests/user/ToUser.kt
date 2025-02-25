@@ -1,9 +1,10 @@
-package me.likenotesapp.requests
+package me.likenotesapp.requests.user
 
-import me.likenotesapp.UpdatableState
+import me.likenotesapp.developer.primitives.ForEach
+import me.likenotesapp.requests.IRequest
 
 sealed class ToUser() : IRequest<Any> {
-    override val response: UpdatableState<Any> = UpdatableState<Any>()
+    override val response: ForEach<Any> = ForEach<Any>()
 
     data class PostMessage(
         val message: String,
@@ -12,7 +13,6 @@ sealed class ToUser() : IRequest<Any> {
 
     data class PostLoadingMessage(
         val message: String = "",
-
     ) : ToUser()
 
     data class GetTextInput(
@@ -20,7 +20,6 @@ sealed class ToUser() : IRequest<Any> {
         val label: String,
         val initial: String? = null,
         val actionName: String = "Дальше",
-
     ) : ToUser()
 
     data class GetChoice(

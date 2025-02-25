@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.likenotesapp.Back
-import me.likenotesapp.requests.ToUser
+import me.likenotesapp.requests.user.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
@@ -26,11 +26,11 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
         HeadView(
             request.title,
             onBackClick = {
-                request.response.post(Back())
+                request.response.next(Back())
             },
             actionContent = {
                 ElevatedButton(onClick = {
-                    request.response.post(text)
+                    request.response.next(text)
                 }, modifier = Modifier) {
                     Text(request.actionName)
                 }

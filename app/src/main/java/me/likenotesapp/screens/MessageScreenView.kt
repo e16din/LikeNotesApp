@@ -6,13 +6,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import me.likenotesapp.User
-import me.likenotesapp.requests.ToUser
+import me.likenotesapp.requests.user.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
 fun MessageScreenView(request: ToUser.PostMessage) {
-    println("MessageScreen")
     HeadView(
         title = "",
         withBack = false,
@@ -24,7 +22,7 @@ fun MessageScreenView(request: ToUser.PostMessage) {
         },
         actionContent = {
             Button(onClick = {
-                request.response.post(Unit)
+                request.response.next(Unit)
             }, modifier = Modifier) {
                 Text(request.actionName)
             }

@@ -7,15 +7,17 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import me.likenotesapp.developer.primitives.collectAsState
+import me.likenotesapp.developer.primitives.debug
 import me.likenotesapp.screens.InputTextScreenView
 import me.likenotesapp.screens.MessageScreenView
 import me.likenotesapp.screens.PendingScreenView
 import me.likenotesapp.screens.ItemsScreenView
-import me.likenotesapp.requests.ToUser
+import me.likenotesapp.requests.user.ToUser
+import me.likenotesapp.requests.user.User
 
 @Composable
 fun handleRequestsToUser() {
-    println("Root")
     val requestState = User.request.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -23,7 +25,9 @@ fun handleRequestsToUser() {
     }
 
     val request = requestState.value
-    println("requestHandler: ${request}")
+    debug {
+        println("handleRequestsToUser: $request")
+    }
     Box(
         modifier = Modifier
             .systemBarsPadding()
@@ -36,7 +40,9 @@ fun handleRequestsToUser() {
             is ToUser.GetTextInput -> InputTextScreenView(request)
             is ToUser.GetChoice -> ItemsScreenView(request)
             else -> {
-                // do nothing
+                debug {
+                    println("handleRequestsToUser: Not Implemented { ${request} }")
+                }
             }
         }
     }

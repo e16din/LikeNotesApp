@@ -2,38 +2,44 @@ package me.likenotesapp
 
 import android.app.Application
 import me.likenotesapp.database.NotesDatabase
-import me.likenotesapp.requests.ToPlatform
+import me.likenotesapp.developer.primitives.work
+import me.likenotesapp.requests.platform.Platform
+import me.likenotesapp.requests.platform.ToPlatform
 
 fun handleRequestsToPlatform(context: Application) {
     val notesDatabase = NotesDatabase.init(context)
 
-    Platform.request.listen { request ->
-        actualScope.launchWithHandler {
-            when (request) {
-                is ToPlatform.AddNote -> {
+    Platform.request.onEach { request ->
+        when (request) {
+            is ToPlatform.AddNote -> {
+                work(onDone = {
+                    request.response.next(Unit)
+                }) {
                     notesDatabase.noteDao().insert(request.note)
-                    request.response.post(Unit)
                 }
+            }
 
-                is ToPlatform.RemoveNote -> {
+            is ToPlatform.RemoveNote -> {
+                work(onDone = {
+                    request.response.next(Unit)
+                }) {
                     notesDatabase.noteDao().delete(request.note)
-                    request.response.post(Unit)
                 }
+            }
 
-                is ToPlatform.UpdateNote -> {
+            is ToPlatform.UpdateNote -> {
+                work(onDone = {
+                    request.response.next(Unit)
+                }) {
                     notesDatabase.noteDao().update(request.note)
-                    request.response.post(Unit)
                 }
+            }
 
-                is ToPlatform.GetNotes -> {
-                    val notesFlow = notesDatabase.noteDao().getAllNotes()
-                    notesFlow.collect { notes ->
-                        request.response.post(notes)
-                    }
-                }
-
-                else -> {
-                    // do nothing
+            is ToPlatform.GetNotes -> {
+                work(onDone = { notes ->
+                    request.response.next(notes)
+                }) {
+                    return@work notesDatabase.noteDao().getAllNotes()
                 }
             }
         }

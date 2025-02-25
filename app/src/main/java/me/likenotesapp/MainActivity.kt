@@ -3,7 +3,6 @@ package me.likenotesapp
 import android.graphics.Color.BLACK
 import android.graphics.Color.WHITE
 import android.os.Bundle
-import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -11,8 +10,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import me.likenotesapp.requests.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -29,9 +26,7 @@ class MainActivity : ComponentActivity() {
                 handleRequestsToUser()
             }
         }
-
-            handleRequestsToPlatform(application)
-//            appFunction()
+        handleRequestsToPlatform(application)
     }
 
     private fun navigationBarStyle(): SystemBarStyle {
