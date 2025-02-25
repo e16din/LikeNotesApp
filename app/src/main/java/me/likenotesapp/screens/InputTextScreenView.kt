@@ -1,6 +1,7 @@
 package me.likenotesapp.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedButton
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import me.likenotesapp.Back
 import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.maxNoteLength
+import me.likenotesapp.maxNoteLines
 
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
@@ -43,14 +45,14 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
         TextField(
             value = text,
             label = { Text(request.label) },
-            maxLines = 8,
+            maxLines = maxNoteLines,
             onValueChange = {
-                if (it.length <= maxNoteLength) {
+                if (it.length <= maxNoteLength && it.count({ it == '\n' }) < maxNoteLines) {
                     text = it
                 }
             },
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
                 .align(Alignment.Companion.CenterHorizontally)
         )
