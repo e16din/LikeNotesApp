@@ -40,6 +40,7 @@ fun main() {
         items = MainMenu.entries,
         canBack = false
     ).request { choice ->
+
         when (choice) {
             MainMenu.AddNote -> {
                 editNote()
@@ -64,11 +65,12 @@ fun main() {
     }
 }
 
-private fun openTrash(removedNotes: List<Note>) {
+fun openTrash(removedNotes: List<Note>) {
     ToUser.GetChoice(
         title = "Заметок в корзине: ${removedNotes.size}",
         items = TrashMenu.entries
     ).request { choice ->
+
         when (choice) {
             is Back -> {
                 User.requestPrevious()
@@ -131,6 +133,7 @@ fun editNote(initial: Note? = null) {
         actionName = "Сохранить",
         type = ToUser.GetString.Type.Long
     ).request { response ->
+
         when (response) {
             is Back -> {
                 User.requestPrevious()
@@ -161,14 +164,13 @@ fun editNote(initial: Note? = null) {
                         text = response
                         updatedMs = nowMs
                     })
+
                 }).request {
-                    ToUser.PostMessage(
-                        message = "Заметка сохранена",
-                        actionName = "Хорошо"
-                    ).request {
-                        User.request.values.clear()
-                        main()
-                    }
+                    ToUser.PostMessage(message = "Заметка сохранена", actionName = "Хорошо")
+                        .request {
+                            User.request.values.clear()
+                            main()
+                        }
                 }
             }
         }
