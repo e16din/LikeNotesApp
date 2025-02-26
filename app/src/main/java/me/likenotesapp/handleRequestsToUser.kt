@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import me.likenotesapp.developer.primitives.collectAsState
 import me.likenotesapp.developer.primitives.debug
@@ -19,11 +18,7 @@ import me.likenotesapp.screens.PendingScreenView
 
 @Composable
 fun handleRequestsToUser() {
-    val requestState = User.request.collectAsState()
-
-    LaunchedEffect(Unit) {
-        main()
-    }
+    val requestState = User.request.collectAsState(resetOther = true)
 
     val request = requestState.value
     debug {

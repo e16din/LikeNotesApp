@@ -10,7 +10,7 @@ import me.likenotesapp.developer.primitives.requests.user.User
 enum class MainChoice(val text: String) {
     AddNote("Написать заметку"),
     ReadNotes("Читать заметки"),
-    SearchNote("Искать заметку")
+    SearchNote("Искать заметки")
 }
 
 interface IChoice
@@ -63,7 +63,7 @@ fun editNote(initial: Note? = null) {
     ToUser.GetString(
         title = "Заметка",
         label = "Заметка",
-        initial = initial?.text,
+        data = initial?.text,
         actionName = "Сохранить",
         type = ToUser.GetString.Type.Long
     ).request { response ->

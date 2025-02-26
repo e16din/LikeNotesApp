@@ -9,7 +9,7 @@ sealed class ToUser() : IRequest<Any> {
     data class PostMessage(
         val message: String,
         val actionName: String = "Дальше",
-        val type: Any = Type.Default
+        val type: Type = Type.Default
     ) : ToUser() {
         enum class Type {
             Default,
@@ -20,10 +20,10 @@ sealed class ToUser() : IRequest<Any> {
     data class GetString(
         val title: String,
         val label: String,
-        val initial: String? = null,
+        var data: String? = null,
         val actionName: String = "Дальше",
         val canBack: Boolean = true,
-        val type: Any = Type.Short
+        val type: Type = Type.Short
     ) : ToUser() {
         enum class Type {
             Short,
@@ -34,6 +34,11 @@ sealed class ToUser() : IRequest<Any> {
     data class GetChoice(
         val title: String,
         val items: List<Any>,
-        val canBack: Boolean = true
-    ) : ToUser()
+        val canBack: Boolean = true,
+        val type: Type = Type.Default
+    ) : ToUser()  {
+        enum class Type {
+            Default
+        }
+    }
 }

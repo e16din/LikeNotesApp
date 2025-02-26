@@ -24,7 +24,13 @@ import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
 fun InputTextScreenView(request: ToUser.GetString) {
-    var text by remember { mutableStateOf(request.initial ?: "") }
+    var text by remember { mutableStateOf(request.data ?: "") }
+
+    fun onTextChanged(string: String) {
+        text = string
+        request.data = string
+    }
+
     Column {
         HeadView(
             request.title,
@@ -49,7 +55,7 @@ fun InputTextScreenView(request: ToUser.GetString) {
                     maxLines = maxNoteLines,
                     onValueChange = {
                         if (it.length <= maxNoteLength && it.count({ it == '\n' }) < maxNoteLines) {
-                            text = it
+                            onTextChanged(it)
                         }
                     },
                     modifier = Modifier
@@ -66,7 +72,7 @@ fun InputTextScreenView(request: ToUser.GetString) {
                     maxLines = 1,
                     singleLine = true,
                     onValueChange = {
-                        text = it
+                        onTextChanged(it)
                     },
                     modifier = Modifier
                         .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)

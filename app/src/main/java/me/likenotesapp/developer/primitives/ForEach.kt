@@ -68,10 +68,13 @@ class ForEach<T : Any>(initial: T? = null) {
 }
 
 @Composable
-fun <T : R, R : Any> ForEach<T>.collectAsState(key: KClass<*> = Unit::class): State<R?> {
+fun <T : R, R : Any> ForEach<T>.collectAsState(
+    key: KClass<*> = Unit::class,
+    resetOther: Boolean = false
+): State<R?> {
     val current = itOrNull()
     return produceState<R?>(current, if (current == null) null else this.it) {
-        onEach(key) {
+        onEach(key, resetOther = resetOther) {
             value = it
         }
     }

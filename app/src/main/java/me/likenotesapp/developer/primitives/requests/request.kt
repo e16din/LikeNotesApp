@@ -1,6 +1,9 @@
 package me.likenotesapp.developer.primitives.requests
 
+import kotlinx.coroutines.Dispatchers
+import me.likenotesapp.developer.primitives.actualScope
 import me.likenotesapp.developer.primitives.debug
+import me.likenotesapp.developer.primitives.launchWithHandler
 import me.likenotesapp.developer.primitives.requests.platform.Platform
 import me.likenotesapp.developer.primitives.requests.platform.ToPlatform
 import me.likenotesapp.developer.primitives.requests.user.ToUser
@@ -31,11 +34,11 @@ fun <T : Any> IRequest<T>.request(content: (T) -> Unit) {
         println("===")
         println("New Request: ${this@request.javaClass.simpleName}")
 
-        User.request.values.forEach {
-            println("User.request.value: ${it.short()}")
-        }
-        Platform.request.values.forEach {
-            println("Platform.request.value: ${it.short()}")
-        }
+//        User.request.values.forEach {
+//            println("User.request.value: ${it.short()}")
+//        }
+//        Platform.request.values.forEach {
+//            println("Platform.request.value: ${it.short()}")
+//        }
     }
 }
