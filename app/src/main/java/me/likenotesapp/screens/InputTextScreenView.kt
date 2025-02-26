@@ -2,7 +2,6 @@ package me.likenotesapp.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
@@ -24,7 +23,7 @@ import me.likenotesapp.maxNoteLines
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
-fun InputTextScreenView(request: ToUser.GetTextInput) {
+fun InputTextScreenView(request: ToUser.GetString) {
     var text by remember { mutableStateOf(request.initial ?: "") }
     Column {
         HeadView(
@@ -42,20 +41,39 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
             }
         )
 
-        TextField(
-            value = text,
-            label = { Text(request.label) },
-            maxLines = maxNoteLines,
-            onValueChange = {
-                if (it.length <= maxNoteLength && it.count({ it == '\n' }) < maxNoteLines) {
-                    text = it
-                }
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
-                .align(Alignment.Companion.CenterHorizontally)
-        )
+        when (request.type) {
+            ToUser.GetString.Type.Long -> {
+                TextField(
+                    value = text,
+                    label = { Text(request.label) },
+                    maxLines = maxNoteLines,
+                    onValueChange = {
+                        if (it.length <= maxNoteLength && it.count({ it == '\n' }) < maxNoteLines) {
+                            text = it
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                        .align(Alignment.Companion.CenterHorizontally)
+                )
+            }
+
+            ToUser.GetString.Type.Short -> {
+                TextField(
+                    value = text,
+                    label = { Text(request.label) },
+                    maxLines = 1,
+                    singleLine = true,
+                    onValueChange = {
+                        text = it
+                    },
+                    modifier = Modifier
+                        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+                        .align(Alignment.Companion.CenterHorizontally)
+                )
+            }
+        }
     }
 }
 
@@ -64,7 +82,7 @@ fun InputTextScreenView(request: ToUser.GetTextInput) {
 fun InputTextScreenPreview() {
     LikeNotesAppTheme {
         InputTextScreenView(
-            ToUser.GetTextInput(
+            ToUser.GetString(
                 title = "Title", label = "Label"
             )
         )

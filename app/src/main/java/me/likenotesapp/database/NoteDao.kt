@@ -24,4 +24,7 @@ interface NoteDao {
 
     @Query("SELECT * from notes ORDER BY updatedMs DESC")
     fun getAllNotes(): List<Note>
+
+    @Query("SELECT * FROM notes WHERE text LIKE '%' || :query || '%'")
+    fun searchNotes(query: String): List<Note>
 }

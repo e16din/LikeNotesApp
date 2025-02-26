@@ -2,14 +2,15 @@ package me.likenotesapp
 
 import androidx.compose.runtime.toMutableStateList
 import me.likenotesapp.developer.primitives.debug
-import me.likenotesapp.developer.primitives.requests.onResponse
+import me.likenotesapp.developer.primitives.requests.request
 import me.likenotesapp.developer.primitives.requests.platform.ToPlatform
 import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.developer.primitives.requests.user.User
 
 enum class MainChoice(val text: String) {
-    AddNote("Добавить заметку"),
-    ReadNotes("Читать заметки")
+    AddNote("Написать заметку"),
+    ReadNotes("Читать заметки"),
+    SearchNote("Искать заметку")
 }
 
 interface IChoice
@@ -22,17 +23,13 @@ sealed class NotesChoice() : IChoice {
     data class Select(val note: Note) : NotesChoice()
 }
 
-fun appFunction() {
+fun main() {
     ToUser.GetChoice(
         title = "Блокнот",
         items = MainChoice.entries,
         canBack = false
-    ).onResponse { choice ->
+    ).request { choice ->
         when (choice) {
-            is Back -> {
-                User.requestPrevious()
-            }
-
             MainChoice.AddNote -> {
                 editNote()
             }
@@ -40,28 +37,47 @@ fun appFunction() {
             MainChoice.ReadNotes -> {
                 readNotes()
             }
+
+            MainChoice.SearchNote -> {
+                ToUser.GetString(
+                    title = "Поиск заметок",
+                    label = "Искать строку",
+                    actionName = "Найти",
+                ).request { response ->
+                    when (response) {
+                        is Back -> {
+                            User.requestPrevious()
+                        }
+
+                        is String -> {
+                            readNotes(query = response, title = "Заметки по запросу \n\n\"$response\"")
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 fun editNote(initial: Note? = null) {
-    ToUser.GetTextInput(
+    ToUser.GetString(
         title = "Заметка",
         label = "Заметка",
         initial = initial?.text,
-        actionName = "Сохранить"
-    ).onResponse { input ->
-        when (input) {
+        actionName = "Сохранить",
+        type = ToUser.GetString.Type.Long
+    ).request { response ->
+        when (response) {
             is Back -> {
                 User.requestPrevious()
             }
 
             is String -> {
-                ToUser.PostLoadingMessage("В процессе...")
-                    .onResponse { loading ->
+                ToUser.PostMessage("В процессе...", type = ToUser.PostMessage.Type.Loading)
+                    .request { loading ->
                         if (loading is Cancel) {
                             User.requestPrevious()
-                            return@onResponse
+                            return@request
                         }
                     }
 
@@ -70,7 +86,7 @@ fun editNote(initial: Note? = null) {
                 (if (initial == null) {
                     ToPlatform.AddNote(
                         Note(
-                            text = input,
+                            text = response,
                             createdMs = nowMs,
                             updatedMs = nowMs
                         )
@@ -78,16 +94,16 @@ fun editNote(initial: Note? = null) {
 
                 } else {
                     ToPlatform.UpdateNote(initial.apply {
-                        text = input
+                        text = response
                         updatedMs = nowMs
                     })
-                }).onResponse {
+                }).request {
                     ToUser.PostMessage(
                         message = "Заметка сохранена",
                         actionName = "Хорошо"
-                    ).onResponse {
+                    ).request {
                         User.request.values.clear()
-                        appFunction()
+                        main()
                     }
                 }
             }
@@ -95,25 +111,25 @@ fun editNote(initial: Note? = null) {
     }
 }
 
-fun readNotes() {
-    ToPlatform.GetNotes().onResponse { notes ->
+fun readNotes(query: String = "", title: String = "Заметки") {
+    ToPlatform.GetNotes(query).request { notes ->
         ToUser.GetChoice(
-            title = "Заметки",
+            title = title,
             items = notes.toMutableStateList(),
-        ).onResponse { choice ->
+        ).request { response ->
             debug {
-                println("choice: $choice")
+                println("choice: $response")
             }
 
-            when (choice) {
+            when (response) {
                 is Back -> User.requestPrevious()
-                is NotesChoice.Remove -> ToPlatform.RemoveNote(choice.note)
-                    .onResponse {
+                is NotesChoice.Remove -> ToPlatform.RemoveNote(response.note)
+                    .request {
                         User.request.pop()
                         readNotes()
                     }
 
-                is NotesChoice.Select -> editNote(choice.note)
+                is NotesChoice.Select -> editNote(response.note)
             }
         }
     }

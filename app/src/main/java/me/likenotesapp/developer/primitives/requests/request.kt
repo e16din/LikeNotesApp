@@ -6,12 +6,12 @@ import me.likenotesapp.developer.primitives.requests.platform.ToPlatform
 import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.developer.primitives.requests.user.User
 
-fun <T : Any> IRequest<T>.onResponse(content: (T) -> Unit) {
+fun <T : Any> IRequest<T>.request(content: (T) -> Unit) {
     fun Any.short() = toString().replace("\n", "").take(64)
 
     response.onEach(resetOther = true) {
         debug {
-            println("${this@onResponse.javaClass.simpleName}.response.value: ${it.short()}")
+            println("${this@request.javaClass.simpleName}.response.value: ${it.short()}")
         }
         content(it)
     }
@@ -29,7 +29,7 @@ fun <T : Any> IRequest<T>.onResponse(content: (T) -> Unit) {
         println("===")
         println("===")
         println("===")
-        println("New Request: ${this@onResponse.javaClass.simpleName}")
+        println("New Request: ${this@request.javaClass.simpleName}")
 
         User.request.values.forEach {
             println("User.request.value: ${it.short()}")

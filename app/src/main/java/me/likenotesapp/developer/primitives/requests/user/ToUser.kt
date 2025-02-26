@@ -9,19 +9,27 @@ sealed class ToUser() : IRequest<Any> {
     data class PostMessage(
         val message: String,
         val actionName: String = "Дальше",
-        ) : ToUser()
+        val type: Any = Type.Default
+    ) : ToUser() {
+        enum class Type {
+            Default,
+            Loading
+        }
+    }
 
-    data class PostLoadingMessage(
-        val message: String = "",
-    ) : ToUser()
-
-    data class GetTextInput(
+    data class GetString(
         val title: String,
         val label: String,
         val initial: String? = null,
         val actionName: String = "Дальше",
-        val canBack: Boolean = true
-    ) : ToUser()
+        val canBack: Boolean = true,
+        val type: Any = Type.Short
+    ) : ToUser() {
+        enum class Type {
+            Short,
+            Long
+        }
+    }
 
     data class GetChoice(
         val title: String,

@@ -23,6 +23,9 @@ sealed class ToPlatform() {
     ) : ToPlatform(), IRequest<Unit>
 
     data class GetNotes(
+        val query: String,
         override val response: ForEach<List<Note>> = ForEach<List<Note>>()
     ) : ToPlatform(), IRequest<List<Note>>
+
+
 }

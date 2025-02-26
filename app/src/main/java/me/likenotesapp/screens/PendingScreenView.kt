@@ -15,7 +15,7 @@ import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
 
 @Composable
-fun PendingScreenView(request: ToUser.PostLoadingMessage) {
+fun PendingScreenView(request: ToUser.PostMessage) {
     HeadView(
         title = request.message,
         withBack = false,
@@ -47,7 +47,7 @@ fun PendingScreenView(request: ToUser.PostLoadingMessage) {
 fun PendingMessageScreenPreview() {
     LikeNotesAppTheme {
         PendingScreenView(
-            ToUser.PostLoadingMessage(
+            ToUser.PostMessage(
                 message = "Message"
             )
         )

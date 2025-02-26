@@ -2,7 +2,6 @@ package me.likenotesapp
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
@@ -23,7 +22,7 @@ fun handleRequestsToUser() {
     val requestState = User.request.collectAsState()
 
     LaunchedEffect(Unit) {
-        appFunction()
+        main()
     }
 
     val request = requestState.value
@@ -42,9 +41,14 @@ fun handleRequestsToUser() {
             .fillMaxSize()
     ) {
         when (request) {
-            is ToUser.PostMessage -> MessageScreenView(request)
-            is ToUser.PostLoadingMessage -> PendingScreenView(request)
-            is ToUser.GetTextInput -> InputTextScreenView(request)
+            is ToUser.PostMessage -> {
+                when (request.type) {
+                    ToUser.PostMessage.Type.Default -> MessageScreenView(request)
+                    ToUser.PostMessage.Type.Loading -> PendingScreenView(request)
+                }
+            }
+
+            is ToUser.GetString -> InputTextScreenView(request)
             is ToUser.GetChoice -> ItemsScreenView(request)
             else -> {
                 debug {
