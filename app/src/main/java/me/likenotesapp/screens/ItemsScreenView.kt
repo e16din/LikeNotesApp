@@ -40,9 +40,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import me.likenotesapp.Back
-import me.likenotesapp.MainChoice
+import me.likenotesapp.IMenuItem
+import me.likenotesapp.MainMenu
 import me.likenotesapp.Note
 import me.likenotesapp.NotesChoice
+import me.likenotesapp.TrashMenu
 import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.headHeight
 import me.likenotesapp.ui.theme.LikeNotesAppTheme
@@ -58,7 +60,7 @@ fun ItemsScreenView(request: ToUser.GetChoice) {
     var headerOffsetHeightPx by remember { mutableFloatStateOf(0f) }
 
     val headerScrollEnabled = request.items.size > 0
-            && oneItem !is MainChoice
+            && oneItem !is MainMenu
 
     val nestedScrollConnection = object : NestedScrollConnection {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -89,26 +91,18 @@ fun ItemsScreenView(request: ToUser.GetChoice) {
             ) {
 
                 fun provideKey(it: Any) = when (oneItem) {
-                    is MainChoice -> {
-                        it
-                    }
-
-                    is Note -> {
-                        (it as Note).id
-                    }
-
-                    else -> {
-                        it
-                    }
+                    is Note -> (it as Note).id
+                    else -> it
                 }
 
                 items(
                     items = request.items.toMutableStateList(),
                     key = { provideKey(it) }) { item ->
                     when (oneItem) {
-                        is MainChoice -> ButtonItemView(request, item)
-                        is Note -> NoteItemView(request, item)
-                        else -> Text("Not implemented")
+                        is MainMenu -> ButtonItemView(request, item as IMenuItem)
+                        is TrashMenu -> ButtonItemView(request, item as IMenuItem)
+                        is Note -> NoteItemView(request, item as Note)
+                        else -> Text("Not Implemented")
                     }
                 }
             }
@@ -132,8 +126,7 @@ fun ItemsScreenView(request: ToUser.GetChoice) {
 }
 
 @Composable
-fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
-    item as MainChoice
+fun ButtonItemView(request: ToUser.GetChoice, item: IMenuItem) = with(request) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Button(
             modifier = Modifier
@@ -143,41 +136,15 @@ fun ButtonItemView(request: ToUser.GetChoice, item: Any?) = with(request) {
                 request.response.next(item)
             }
         ) {
-
             Text(item.text)
         }
     }
 }
 
 @Composable
-fun NoteItemView(request: ToUser.GetChoice, item: Any?) {
-    item as Note
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            request.response.next(NotesChoice.Remove(item))
-            true
-        })
-
-    SwipeToDismissBox(
-        modifier = Modifier.padding(start = 24.dp, end = 24.dp),
-        state = dismissState,
-        backgroundContent = {
-            Card(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 4.dp),
-                colors = CardDefaults.cardColors()
-                    .copy(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Icon(
-                        Icons.Default.Delete,
-                        "delete",
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    )
-                }
-            }
-        }) {
+fun NoteItemView(request: ToUser.GetChoice, item: Note) {
+    @Composable
+    fun NoteView() {
         Card(
             Modifier
                 .fillMaxWidth()
@@ -190,6 +157,44 @@ fun NoteItemView(request: ToUser.GetChoice, item: Any?) {
                     horizontal = 16.dp, vertical = 12.dp
                 )
             )
+        }
+    }
+
+    val paddingModifier = Modifier.padding(start = 24.dp, end = 24.dp)
+    if (item.removed) {
+        Box(paddingModifier) {
+            NoteView()
+        }
+
+    } else {
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = {
+                request.response.next(NotesChoice.Remove(item))
+                true
+            })
+
+        SwipeToDismissBox(
+            modifier = paddingModifier,
+            state = dismissState,
+            backgroundContent = {
+                Card(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 4.dp),
+                    colors = CardDefaults.cardColors()
+                        .copy(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            Icons.Default.Delete,
+                            "delete",
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        )
+                    }
+                }
+            })
+        {
+            NoteView()
         }
     }
 }
@@ -208,7 +213,7 @@ fun ItemsScreenPreview() {
 }
 
 
-private fun mockButtons() = MainChoice.entries
+private fun mockButtons() = MainMenu.entries
 private fun mockNotes() = listOf(
     Note(
         text = "Note Text",

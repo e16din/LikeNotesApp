@@ -22,9 +22,9 @@ interface NoteDao {
     @Query("SELECT * from notes WHERE id = :id")
     fun getNote(id: Int): Note
 
-    @Query("SELECT * from notes ORDER BY updatedMs DESC")
-    fun getAllNotes(): List<Note>
+    @Query("SELECT * from notes WHERE removed = :removed ORDER BY updatedMs DESC")
+    fun getAllNotes(removed: Boolean): List<Note>
 
-    @Query("SELECT * FROM notes WHERE text LIKE '%' || :query || '%'")
-    fun searchNotes(query: String): List<Note>
+    @Query("SELECT * FROM notes WHERE removed = :removed AND text LIKE '%' || :query || '%'")
+    fun searchNotes(query: String, removed: Boolean): List<Note>
 }

@@ -11,4 +11,5 @@ data class Note(
     var updatedMs: Long,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    var removed: Boolean = false
 )

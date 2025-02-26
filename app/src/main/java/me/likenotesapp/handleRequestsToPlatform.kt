@@ -47,9 +47,9 @@ fun handleRequestsToPlatform(context: Application) {
                     request.response.next(notes)
                 }) {
                     if (request.query.isEmpty()) {
-                        return@work notesDatabase.noteDao().getAllNotes()
+                        return@work notesDatabase.noteDao().getAllNotes(request.removed)
                     } else {
-                        return@work notesDatabase.noteDao().searchNotes(request.query)
+                        return@work notesDatabase.noteDao().searchNotes(request.query, request.removed)
                     }
                 }
             }

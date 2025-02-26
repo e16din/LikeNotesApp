@@ -7,16 +7,27 @@ import me.likenotesapp.developer.primitives.requests.platform.ToPlatform
 import me.likenotesapp.developer.primitives.requests.user.ToUser
 import me.likenotesapp.developer.primitives.requests.user.User
 
-enum class MainChoice(val text: String) {
-    AddNote("Написать заметку"),
-    ReadNotes("Читать заметки"),
-    SearchNote("Искать заметки")
-}
-
 interface IChoice
 
 class Back : IChoice
 class Cancel : IChoice
+
+interface IMenuItem : IChoice {
+    val text: String
+}
+
+enum class MainMenu(override val text: String) : IMenuItem {
+    AddNote("Написать заметку"),
+    ReadNotes("Читать заметки"),
+    SearchNotes("Искать заметки"),
+    Trash("Корзина"),
+}
+
+enum class TrashMenu(override val text: String) : IMenuItem {
+    ReadNotes("Читать заметки"),
+    SearchNotes("Искать заметки"),
+    EmptyTrash("Очистить корзину"),
+}
 
 sealed class NotesChoice() : IChoice {
     data class Remove(val note: Note) : NotesChoice()
@@ -26,33 +37,86 @@ sealed class NotesChoice() : IChoice {
 fun main() {
     ToUser.GetChoice(
         title = "Блокнот",
-        items = MainChoice.entries,
+        items = MainMenu.entries,
         canBack = false
     ).request { choice ->
         when (choice) {
-            MainChoice.AddNote -> {
+            MainMenu.AddNote -> {
                 editNote()
             }
 
-            MainChoice.ReadNotes -> {
-                readNotes()
+            MainMenu.ReadNotes -> {
+                ToPlatform.GetNotes().request { notes ->
+                    readNotes(notes)
+                }
             }
 
-            MainChoice.SearchNote -> {
-                ToUser.GetString(
-                    title = "Поиск заметок",
-                    label = "Искать строку",
-                    actionName = "Найти",
-                ).request { response ->
-                    when (response) {
-                        is Back -> {
-                            User.requestPrevious()
-                        }
+            MainMenu.SearchNotes -> {
+                searchNotes()
+            }
 
-                        is String -> {
-                            readNotes(query = response, title = "Заметки по запросу \n\n\"$response\"")
+            MainMenu.Trash -> {
+                ToPlatform.GetNotes(removed = true).request { removedNotes ->
+                    openTrash(removedNotes)
+                }
+            }
+        }
+    }
+}
+
+private fun openTrash(removedNotes: List<Note>) {
+    ToUser.GetChoice(
+        title = "Заметок в корзине: ${removedNotes.size}",
+        items = TrashMenu.entries
+    ).request { choice ->
+        when (choice) {
+            is Back -> {
+                User.requestPrevious()
+            }
+
+            TrashMenu.EmptyTrash -> {
+                removedNotes.forEach { note ->
+                    ToPlatform.RemoveNote(note)
+                        .request {
+                            ToUser.PostMessage(
+                                message = "Корзина очищена",
+                                actionName = "Хорошо"
+                            ).request {
+                                ToPlatform.GetNotes(removed = true).request { removedNotes ->
+                                    User.request.pop()
+                                    User.request.pop()
+                                    openTrash(removedNotes)
+                                }
+                            }
                         }
-                    }
+                }
+            }
+
+            TrashMenu.ReadNotes -> {
+                readNotes(removedNotes, "Заметки в корзине")
+            }
+
+            TrashMenu.SearchNotes -> {
+                searchNotes(removed = true)
+            }
+        }
+    }
+}
+
+fun searchNotes(removed: Boolean = false) {
+    ToUser.GetString(
+        title = "Поиск заметок",
+        label = "Искать строку",
+        actionName = "Найти",
+    ).request { response ->
+        when (response) {
+            is Back -> {
+                User.requestPrevious()
+            }
+
+            is String -> {
+                ToPlatform.GetNotes(query = response, removed = removed).request { notes ->
+                    readNotes(notes, "Заметки по запросу \n\n\"$response\"")
                 }
             }
         }
@@ -111,26 +175,29 @@ fun editNote(initial: Note? = null) {
     }
 }
 
-fun readNotes(query: String = "", title: String = "Заметки") {
-    ToPlatform.GetNotes(query).request { notes ->
-        ToUser.GetChoice(
-            title = title,
-            items = notes.toMutableStateList(),
-        ).request { response ->
-            debug {
-                println("choice: $response")
-            }
+fun readNotes(notes: List<Note>, title: String = "Заметки") {
+    ToUser.GetChoice(
+        title = title,
+        items = notes.toMutableStateList(),
+    ).request { response ->
+        debug {
+            println("choice: $response")
+        }
 
-            when (response) {
-                is Back -> User.requestPrevious()
-                is NotesChoice.Remove -> ToPlatform.RemoveNote(response.note)
+        when (response) {
+            is Back -> User.requestPrevious()
+            is NotesChoice.Remove -> {
+                response.note.removed = true
+                ToPlatform.UpdateNote(response.note)
                     .request {
                         User.request.pop()
-                        readNotes()
+                        ToPlatform.GetNotes().request { notes ->
+                            readNotes(notes, title)
+                        }
                     }
-
-                is NotesChoice.Select -> editNote(response.note)
             }
+
+            is NotesChoice.Select -> editNote(response.note)
         }
     }
 }
